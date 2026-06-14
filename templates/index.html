@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Spiderweb</title>
+        <meta name = "viewport" content ="width=device-width, initial-scale=1.0"> <!--THIS IS IMPERATIVE-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> <!--https://www.geeksforgeeks.org/python/how-to-use-css-in-python-flask/-->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script> <!--https://releases.jquery.com/-->
+
+        <script src="https://unpkg.com/wavesurfer.js@7"></script> <!--https://wavesurfer.xyz/docs/-->
+        
+        <!--<script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.5.0"></script>-->
+        <script src="{{ url_for('static', filename='htmx.min.js') }}" crossorigin="anonymous"></script> <!--https://htmx.org/docs/#installing--> 
+    </head>
+    <body>
+        <div id="everythingb4audio" hx-history-elt> <!--https://www.reddit.com/r/htmx/comments/16ahxsn/back_button_state_preservation/-->
+        {{ myhtml|safe }} <!--https://flask.palletsprojects.com/en/stable/templating/-->
+        </div>
+        
+        <div id="waveformcontainer">
+            <div id="playbutton" class="buttonesque" style="font-size:40px;" onclick="wavesurfer.playPause();">▶️</div>
+            <div id="waveform"></div>
+            <div id="video_and_art" style="display:flex;justify-content: center;"></div>
+        </div>
+        <script src="{{ url_for('static', filename='script.js') }}"></script> <!-- HAS TO BE DECLARED AFTER JQUERY AND WAVESURFER ABOVE-->
+    </body>
+</html>
