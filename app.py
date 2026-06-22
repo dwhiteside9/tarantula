@@ -121,11 +121,11 @@ def radiobuttonhtml(sort, direction, tab):
     return myhtml
 
 def singular_art_image(inode, extras, source):
-    constructedpath = f"{os.getcwd()}/.art/{inode}.jpg"
+    constructedpath = f"{os.getcwd()}/staticx/art/{inode}.jpg"
 
     if pathlib.Path(constructedpath).is_file():
 
-        imgurl = f"/art/{inode}.jpg"
+        imgurl = f"/art/{inode}.jpg" #from the perspective of flask, so the staticx parent is ignored
 
         return f"<img decoding='async' loading='lazy' style='vertical-align:middle' src='{imgurl}' alt='' {extras}></img>"
 
@@ -330,10 +330,9 @@ def splitartists(mylist, itemtype):
 
 def create_app():
 
-    static_folder_name = 'static'
     myapp = Flask(
         __name__, 
-        static_folder = static_folder_name, #https://youtu.be/9At5sg-jPpU?list=PL7yh-TELLS1EyAye_UMnlsTGKxg8uatkM&t=125
+        static_folder = 'staticx', #https://youtu.be/9At5sg-jPpU?list=PL7yh-TELLS1EyAye_UMnlsTGKxg8uatkM&t=125
         static_url_path = '/',
         template_folder = 'templates'
     )
@@ -341,7 +340,6 @@ def create_app():
     myapp.config.from_file("config.toml", load=tomllib.load, text=False) #https://flask.palletsprojects.com/en/stable/config/
 
     with myapp.app_context():
-        g.static_folder_name = static_folder_name
         dbscan(myapp) #also includes the dbcreate
 
     #https://pythongeeks.org/redirect-errors-flask/
@@ -511,7 +509,6 @@ def create_app():
     def subsonic(subsonic_endpoint): #any functions named in here cannot have the same name as "subsonic"
         subsonic_response = returnsubsonic(
             subsonic_endpoint=subsonic_endpoint, 
-            static_folder_name=static_folder_name,
             filesystem_path=myapp.config['MEDIAPATH'],
         )
         return subsonic_response

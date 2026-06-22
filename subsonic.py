@@ -2,7 +2,7 @@ from actions import * #actions.py
 from app import * #app.py
 from string import ascii_uppercase
 
-def returnsubsonic(subsonic_endpoint, static_folder_name, filesystem_path):
+def returnsubsonic(subsonic_endpoint, filesystem_path):
 
     def AlbumID3WithSongs(albumid):
         pprint('album id: ')
@@ -46,7 +46,7 @@ def returnsubsonic(subsonic_endpoint, static_folder_name, filesystem_path):
 
 
     def artpath(artid):
-        artpath = f"{os.getcwd()}/{static_folder_name}/art/{artid}.jpg"
+        artpath = f"{os.getcwd()}/staticx/art/{artid}.jpg"
 
         if (pathlib.Path(artpath)).is_file():
             return artpath
