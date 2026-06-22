@@ -439,7 +439,7 @@ def preliminary_insert_row(mycursor, diskfile_info):
 
 def artwork(filepath, inode):
 
-    constructedpath = f"{os.getcwd()}/{g.static_folder_name}/art/{inode}.jpg"
+    constructedpath = f"{os.getcwd()}/.art/{inode}.jpg"
 
     if pathlib.Path(constructedpath).is_file():
         return inode

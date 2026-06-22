@@ -121,7 +121,7 @@ def radiobuttonhtml(sort, direction, tab):
     return myhtml
 
 def singular_art_image(inode, extras, source):
-    constructedpath = f"{os.getcwd()}/.staticx/art/{inode}.jpg"
+    constructedpath = f"{os.getcwd()}/.art/{inode}.jpg"
 
     if pathlib.Path(constructedpath).is_file():
 
@@ -330,7 +330,7 @@ def splitartists(mylist, itemtype):
 
 def create_app():
 
-    static_folder_name = '.staticx'
+    static_folder_name = 'static'
     myapp = Flask(
         __name__, 
         static_folder = static_folder_name, #https://youtu.be/9At5sg-jPpU?list=PL7yh-TELLS1EyAye_UMnlsTGKxg8uatkM&t=125

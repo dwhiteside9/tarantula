@@ -1,0 +1,209 @@
+/*@import "tailwindcss";*/
+
+@font-face {
+	font-family: Noto Emoji;
+	src: url('noto.ttf');
+}
+
+@font-face {
+	font-family: Teko;
+	src: url('teko.ttf');
+}
+
+
+:root {
+	--accentcolor: steelblue;
+	--bg-color-number: 35;
+	--bgcolor: rgb(var(--bg-color-number), var(--bg-color-number), var(--bg-color-number));
+	--visited-color: rgb(181, 111, 181);
+}
+
+@media only screen and (max-width: 900px) {
+	.hideshrink {
+		display: none; /* https://stackoverflow.com/questions/133051/what-is-the-difference-between-visibilityhidden-and-displaynone */
+	}
+	td {
+		text-align: center;
+		padding-top:5px;
+		padding-bottom: 5px;
+	}
+	.showshrink {
+		font-size: 14px;
+		color:gray;
+	}
+	td > img {
+		height:35px;
+	}
+}
+
+@media only screen and (min-width: 900px) {
+	.showshrink {
+		display: none;
+	}
+	td {
+		text-align: left;
+	}
+	td > img {
+		height:20px;
+	}
+}
+
+td {
+	padding-left:5px;
+	padding-right:5px;
+}
+
+.noto {
+	font-family: "Noto Emoji", sans-serif;
+	font-optical-sizing:auto;
+	font-weight: normal;
+	font-style: normal;
+	/* https://stackoverflow.com/a/76448206 */
+	position:relative;
+	top:-0px;
+}
+
+body { /* things inside inherit this */
+	height: auto; /* https://stackoverflow.com/questions/46655386/when-css-position-sticky-stops-sticking */
+	background: var(--bgcolor);
+	color: lightgray;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+	font-size:16px;
+	margin: 0px;
+}
+
+a {
+	color: var(--accentcolor)
+}
+
+button, .buttonesque {
+	background:gray;
+	border-radius: 5px;
+	border: 2px solid black;
+	cursor:pointer;
+	font-weight:bold;
+}
+
+button:hover, .buttonesque:hover {
+	filter:brightness(120%);
+}
+
+input {
+	border-radius: 5px;
+	font-weight:bold;
+	background: rgb(71, 76, 95); /*darkslategray*/
+	color:white;
+	text-align:center;
+}
+
+input::placeholder {
+	color:lightgray;
+}
+
+input:focus {
+	outline:none;
+}
+
+.nav {
+	background: rgb(22,22,22);
+	top: 0px; 
+	position: sticky; 
+}
+
+.nav div { /*any div infinitely inside a nav class */
+	background: rgb(15,15,15);
+	height:80px;
+	line-height:80px; /*For vertical middle aligned text */
+	font-family: 'Teko', sans-serif;
+	color:var(--accentcolor);
+	font-weight:600;
+	font-size: 30px;
+}
+
+.flexcontainer {
+	display: flex;
+	align-items: flex-start;
+	background:var(--bgcolor) !important;
+}
+
+.flexcontainer > * { /*behavior not colors */
+	flex-grow: 1;
+	display:block;
+	/*overflow-x:auto;*/
+	margin:0px;
+	padding:0px;
+	text-align: center;
+}
+
+#waveformcontainer { 
+	/*https://stackoverflow.com/questions/44092529/make-grid-container-fill-columns-not-rows*/
+	display: grid;
+	grid-template-columns: 120px 15fr 2.5fr;
+	grid-auto-flow: row;
+	bottom:0px;
+	position: fixed;
+	background:rgb(25, 25, 25);
+	padding:10px;
+	width:100%;
+}
+
+.wrap {
+	flex-wrap:wrap;
+}
+.nowrap {
+	flex-wrap:nowrap;
+}
+
+.selected {
+	cursor: default; /*arrow */
+	color: white !important;
+	border-bottom: 4px solid gray !important;
+}
+.notselected {
+	cursor: pointer;
+	border-bottom: 4px solid rgb(22,22,22) !important;
+}
+.notselected:hover {
+	background:rgb(30,30,30);
+}
+
+#tabdiv {
+	text-align: center;
+}
+
+#tabdiv > * {
+	margin-left:auto;
+	margin-right:auto;
+}
+
+#tabdiv table {
+	width:60%;
+	border-collapse: collapse;
+}
+
+tr {
+	display:table-row;
+	border-bottom: 4px solid var(--bgcolor);
+}
+
+tr:hover {
+	background:rgb(60, 60, 60) !important;
+}
+
+td.namecell:hover {
+	outline:3px solid var(--accentcolor);
+	cursor:pointer;
+	font-style: oblique;
+}
+
+/*https://htmx.org/docs/#indicators*/
+.htmx-indicator{
+    display:none;
+	height:20px;
+}
+.htmx-request .htmx-indicator{
+    display:inline;
+}
+.htmx-request.htmx-indicator{
+    display:inline;
+}
