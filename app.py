@@ -271,7 +271,7 @@ def htmlblocks(mydict, sort, direction, searchvalue, tab):
             myhtml += f'''<tr><td colspan=100 style='width:30%'>'''
             myhtml += "<span style=font-size:10px>"
 
-            pprint(item['parseme'])
+            #pprint(item['parseme'])
 
             for key in json.loads(item['parseme']).keys():
                 myhtml += key + ': '
