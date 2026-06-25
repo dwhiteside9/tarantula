@@ -186,8 +186,8 @@ def item_select(filters): #artist not incorporated yet
 
         #Previously had: REPLACE(LOWER(value), '(', '') AS namesort
         commonselection = '''
-        GROUP_CONCAT(file.ogfileinode) AS ogfileinode, 
-        GROUP_CONCAT(file.inode) as inode,
+        file.ogfileinode, 
+        file.inode,
         GROUP_CONCAT(DISTINCT file.artinode) AS artinode,
         LOWER(metadata.xvalue) AS namesort, 
         metadata.xvalue as namedisplay, 
@@ -249,7 +249,7 @@ def item_select(filters): #artist not incorporated yet
         '''
         sqlclauses = ''
         for possible_filter in possible_filters:
-            if possible_filter in filters.keys():
+            if possible_filter in filters.keys() and filters[possible_filter] != '': #2nd part is for example when there is an album with no date set and the split with --- returns an empty string
                 match possible_filter:
                     case 'artist':
                         sqlclauses += f" AND unicode(metadata_artists.xvalue) = '{filters[possible_filter]}'"

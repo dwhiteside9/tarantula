@@ -85,7 +85,7 @@ function wavesurf(filepath) {
 		container: '#waveform',
 		waveColor: 'gray',
 		progressColor: accentcolor,
-		cursorWidth: 0.01,
+		cursorWidth: 0,
 		//cursorColor: 'rgb(25,25,25)', //inherits progresscolor
 		barWidth: 0,
 		mediaControls: false,

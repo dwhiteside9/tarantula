@@ -4,44 +4,177 @@ from string import ascii_uppercase
 
 def returnsubsonic(subsonic_endpoint, filesystem_path):
 
+    def albumList2():
+
+        base = {
+            'album': []
+        }
+
+        filters = {'tab': 'album'}
+
+        if request.values['type'] == 'byGenre':
+            filters['genre'] = request.values['genre']
+
+        myresult = item_select(filters)
+
+        for item in myresult['namematch']:
+            base['album'].append(AlbumID3(item))
+
+        return base
+
+    def artists():
+        base = {
+            "ignoredArticles": "The An A Die Das Ein Eine Les Le La",
+            "index": []
+        }
+
+        for character in ascii_uppercase:
+            base['index'].append({
+                "name": character,
+                "artist": []
+            })
+
+        myresult = item_select({'tab': 'artist'})
+
+        for item in myresult['namematch']:
+            artist_obj = ArtistID3(item)
+            first_character = item['namedisplay'][0].upper()
+            index_number = ascii_uppercase.index(first_character)
+            base['index'][index_number]['artist'].append(artist_obj)
+
+        return base
+
+    def user():
+        base = {
+            "username": "drew",
+            "email": "sindre@activeobjects.no",
+            "scrobblingEnabled": "true",
+            "adminRole": "false",
+            "settingsRole": "true",
+            "downloadRole": "true",
+            "uploadRole": "false",
+            "playlistRole": "true",
+            "coverArtRole": "true",
+            "commentRole": "true",
+            "podcastRole": "true",
+            "streamRole": "true",
+            "jukeboxRole": "true",
+            "shareRole": "false"
+        }
+
+        return base
+
+    def genres():
+
+        base = {'genre': []}
+
+        myresult = item_select({'tab': 'genre'})
+
+        for item in myresult['namematch']:
+            curr_album = {}
+
+            curr_album['songCount'] = item['filecount']
+            curr_album['albumCount'] = item['albumcount']
+            curr_album['value'] = item['namedisplay']
+
+            base['genre'].append(curr_album)
+
+        return base
+
+    def searchResult3(request):
+        searchvalue = request.args['query']
+
+        base = {
+            'artist': [],
+            'album': [],
+            'song': []
+        }
+
+        for item in item_select({'tab': 'artist'})['namematch']:
+            base['artist'].append(ArtistID3(item))            
+
+        for item in item_select({'tab': 'album'})['namematch']:
+            base['album'].append(AlbumID3(item))
+
+        for item in item_select({'tab': 'track', 'searchvalue': searchvalue})['namematch']:
+            base['song'].append(Child(item))
+
+        return base
+
+    def songsByGenre(request):
+        base = {'songsByGenre': song()}
+
+        for item in item_select({'genre': request.args['genre'], 'tab': 'track'})['namematch']:
+            base['songsByGenre']['song'].append(Child(item))
+
+        return base
+
+    def randomSongs(request):
+        base = {'randomSongs': songs()}
+
+        myquery_args = {'tab': 'track'}
+
+        if 'genre' in request.args:
+            myquery_args['genre'] = request.args['genre']
+
+        for item in item_select(myquery_args)['namematch']:
+            base['randomSongs']['song'].append(Child(item))
+
+        return base
+
+    def songs():
+        base = {'song': []}
+        return base
+
+    def topSongs(request):
+
+        base = songs()
+
+        myresult = item_select({'artist': request.args['artist'], 'tab': 'track'})
+
+        for item in myresult['namematch']:
+            base['song'].append(Child(item))
+
+        return base
+
     def AlbumID3WithSongs(albumid):
+
         pprint('album id: ')
         pprint(albumid)
 
+        pprint('datesplit: ')
+        pprint(albumid.split('---')[1])
+
         for item in item_select({'tab': 'album','album': albumid.split('---')[0], 'date': albumid.split('---')[1]})['namematch']:
             #only one expected result
-            baseresponse = AlbumID3(item)
-
-        baseresponse['song'] = []
+            base = AlbumID3(item)
 
         myresult = item_select({'album': albumid.split('---')[0], 'tab': 'track'})
 
         for item in myresult['namematch']:
-            baseresponse['song'].append(Child(item))
+            base['song'].append(Child(item))
 
-        pprint(baseresponse)
-        return baseresponse
+        return base
 
     def ArtistWithAlbumsID3(artistid):
 
-        pprint(artistid)
+        base = {
+            'artist': {}
+        }
 
-        for item in item_select(
-            {
-                'artist': artistid, 
-                'tab': 'artist'
-            }
-        )['namematch']:
-            baseresponse = ArtistID3(item)
+        for item in item_select({'id': artistid, 'tab': 'artist'})['namematch']:
+            base['artist'] = ArtistID3(item)
 
         for item in item_select({'artist': artistid, 'tab': 'album'})['namematch']:
-            baseresponse['album'].append(AlbumID3(item))
+            base['artist']['album'].append(AlbumID3(item)) #yeah from what I can see the album is embedded inside the artist
 
-        return baseresponse
+        return base
 
     def artistInfo(artistid):
         return {
-            'biography': 'biographyyyy'
+            'artistInfo': {
+                'biography': 'biographyyyy'
+            }
         }
 
 
@@ -57,22 +190,18 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
         artistid3_array = []
 
-        for artist in json.loads(item['artists_json']):
-            for artist_return in item_select({'id': artist, 'tab': 'artist'})['namematch']:
-                #should be only 1 iteration of this for loop
-                artistid3_array.append(ArtistID3(artist_return))
-
-        pprint(item['inode'].split(',')[0])
+        for artist_return in item_select({'inode': item['inode'], 'tab': 'artist'})['namematch']:
+            artistid3_array.append(ArtistID3(artist_return))
 
         albumname = None
         albumdate = None
 
-        for albumreturn in item_select({'tab': 'album', 'inode': item['inode'].split(',')[0]})['namematch']:
+        for albumreturn in item_select({'tab': 'album', 'inode': item['inode']})['namematch']:
             albumname = albumreturn['namedisplay']
             albumdate = albumreturn['releasedate']
 
         return {
-            'id': item['inode'].split(',')[0],
+            'id': item['inode'],
             'parent': 'parentalbum',
             'isDir': False,
             'title': item['namedisplay'],
@@ -124,7 +253,7 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
         }
 
     def ArtistID3(item):
-        artistid3_return = {
+        base = {
             'whatami?': 'artistid3',
             'id': item['namedisplay'],
             'name': item['namedisplay'],
@@ -139,7 +268,7 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'album': [] #for use with artistswithalbumsid3
         }
 
-        return artistid3_return
+        return base
 
     def AlbumID3(item):
         curr_album = {}
@@ -165,6 +294,7 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
 
         #EDIT TO ROUTE TO ARTISTID3
+        '''
         if item['artists_json'] is not None:
 
             curr_album['artistId'] = json.loads(item['artists_json'])[0]
@@ -183,14 +313,24 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             if subsonic_endpoint == 'getAlbumList2':
                 curr_album['artist'] = ''
             curr_album['artists'] = []
-        curr_album['year'] = item['releasedate']
-        curr_album['genre'] = 'test genre'
+        '''
 
-        #pprint(curr_album)
+        curr_album['artists'] = []
+
+        if item['artists_json'] is not None:
+            for artistid in json.loads(item['artists_json']):
+                myresult = item_select({'id': artistid, 'tab': 'artist'})
+                for item in myresult['namematch']:
+                    curr_album['artists'].append(ArtistID3(item))
+
+        curr_album['year'] = item['releasedate']
+        curr_album['genre'] = 'test genre - albumid3'
+
+        curr_album['song'] = [] #for use with AlbumID3WithSongs
 
         return curr_album
 
-    if subsonic_endpoint not in ['ping.view', 'ping']:
+    if subsonic_endpoint not in ['ping.view']:
         subsonic_endpoint = subsonic_endpoint.removesuffix('.view')
 
     match subsonic_endpoint:
@@ -199,82 +339,27 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
         case 'ping': #for supersonic
             xmldata = '<subsonic-response status="ok" version="1.1.1"> </subsonic-response>'
             return Response(xmldata, mimetype='text/xml') #https://stackoverflow.com/a/11774026
-        case 'getArtists':
-
+        case 'getTopSongs':
             subobject = {
-                "ignoredArticles": "The An A Die Das Ein Eine Les Le La",
-                "index": []
+                'topSongs': topSongs(request)
             }
-
-            for character in ascii_uppercase:
-                subobject['index'].append({
-                    "name": character,
-                    "artist": []
-                })
-
-            myresult = item_select({'tab': 'artist'})
-
-            for item in myresult['namematch']:
-                artist_obj = ArtistID3(item)
-                first_character = item['namedisplay'][0].upper()
-                index_number = ascii_uppercase.index(first_character)
-                subobject['index'][index_number]['artist'].append(artist_obj)
+        case 'getArtists':
+            subobject = {
+                'artists': artists()
+            }
 
         case 'getAlbumList2':
-
-            filters = {'tab': 'album'}
-
-            if request.values['type'] == 'byGenre':
-                filters['genre'] = request.values['genre']
-
-            pprint(filters)
-
-            myresult = item_select(filters)
-
-            subobject = {}
-            subobject['album'] = []
-
-            for item in myresult['namematch']:
-                curr_album = AlbumID3(item)
-
-                subobject['album'].append(curr_album)
-
-        case 'getUser':
-
-            #pprint(getUser)
-
             subobject = {
-
-                "username": "drew",
-                "email": "sindre@activeobjects.no",
-                "scrobblingEnabled": "true",
-                "adminRole": "false",
-                "settingsRole": "true",
-                "downloadRole": "true",
-                "uploadRole": "false",
-                "playlistRole": "true",
-                "coverArtRole": "true",
-                "commentRole": "true",
-                "podcastRole": "true",
-                "streamRole": "true",
-                "jukeboxRole": "true",
-                "shareRole": "false"
+                'albumList2': albumList2()
             }
 
+        case 'getUser': #takes "username" argument
+            subobject = user()
+
         case 'getGenres':
-            myresult = item_select({'tab': 'genre'})
-
-            subobject = {}
-            subobject['genre'] = []
-
-            for item in myresult['namematch']:
-                curr_album = {}
-
-                curr_album['songCount'] = item['filecount']
-                curr_album['albumCount'] = item['albumcount']
-                curr_album['value'] = item['namedisplay']
-
-                subobject['genre'].append(curr_album)
+            subobject = {
+                'genres': genres()
+            }
 
         case 'getCoverArt':
             artid = request.args.get('id')
@@ -289,47 +374,15 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
                 return Response(xmldata, mimetype='text/xml')
 
         case 'search3':
-
-            searchvalue = request.args['query']
-
-            pprint(searchvalue)
-
             subobject = {
-                'artist': [],
-                'album': [],
-                'song': []
+                'searchResult3': searchResult3(request)
             }
-
-            for item in item_select({'tab': 'artist'})['namematch']:
-
-                subobject['artist'].append(ArtistID3(item))            
-
-            for item in item_select({'tab': 'album'})['namematch']:
-
-                subobject['album'].append(AlbumID3(item))
-
-            for item in item_select({'tab': 'track', 'searchvalue': searchvalue})['namematch']:
-
-                subobject['song'].append(Child(item))
 
         case 'getSongsByGenre':
-            subobject = {
-                'song': []
-            }
+            subobject = songsByGenre(request)
 
-            if 'genre' in request.args:
-                genre = request.args['genre']
-                result_part_to_use = 'anymatch'
-            else:
-                genre = ''
-                result_part_to_use = 'namematch'
-
-            myresult = item_select({'genre': genre,  'tab': 'track'})
-
-            for item in myresult[result_part_to_use]:
-                curr_song = Child(item)
-
-                subobject['song'].append(curr_song)
+        case 'getRandomSongs':
+            subobject = randomSongs(request)
 
         case 'getArtist':
             subobject = ArtistWithAlbumsID3(request.args['id'])
@@ -338,7 +391,9 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             subobject = artistInfo(request.args['id'])
 
         case 'getAlbum':
-            subobject = AlbumID3WithSongs(request.args['id'])
+            subobject = {
+                'album': AlbumID3WithSongs(request.args['id'])
+            }
 
         case 'stream':
             fileid = request.args.get('id')
@@ -362,29 +417,13 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
         case _: #default case
             return 'not valid!!1!'
 
-    endpoint_mapper = {
-        'ping': '',
-        'ping.view': '',
-        'getArtist': 'artist',
-        'getArtists': 'artists',
-        'getAlbumList2': 'albumList2',
-        'getUser': 'user',
-        'getGenres' : 'genres',
-        'getAlbum': 'album',
-        'search3': 'searchResult3',
-        'getSongsByGenre': 'songsByGenre',
-        'getArtistInfo': 'artistInfo',
-        'getAlbum': 'album'
-    }
+    subobject['status'] = 'ok'
+    subobject['version'] = '1.16.1'
+    subobject['type'] = "Tarantula (OpenSubsonic)"
+    subobject['serverVersion'] = '0.0.1'
+    subobject['openSubsonic'] = True
 
     return { #make this a class?????
-        "subsonic-response": {
-            "status": "ok",
-            "version": "1.16.1",
-            "type": "Spider Server (OpenSubsonic)",
-            "serverVersion": "0.0.1",
-            "openSubsonic": True,
-            endpoint_mapper[subsonic_endpoint]: subobject
-        }
+        "subsonic-response": subobject
     }
         
