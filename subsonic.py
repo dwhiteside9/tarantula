@@ -244,7 +244,7 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'bookmarkPosition': 0,
             'originalwidth': 100,
             'played': '2000-01-01T00:00:00',
-            'bpm': 100,
+            'bpm': None,
             'comment': 'Comment placeholder',
             'sortName': item['namesort'],
             'musicBrainzId': None,
@@ -261,7 +261,9 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'explicitStatus': '', #explicit/clean/""
         }
 
-        #excluding singular noun 'genre' key and artistId
+        #excluding singular noun 'genre' key and artistId, for now
+
+        base['bpm'] = singularattribute(item['inode'], 'BPM')
 
         for album in item_select({'inode': item['inode'], 'tab': 'album'})['namematch']:
             base['album'] = album['namedisplay']

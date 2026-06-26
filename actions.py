@@ -141,8 +141,23 @@ def getone(tab, itemid):
         }).fetchall()
         return myresult
 
+def singularattribute(inode, attribute):
+    with get_db() as mycursor:
+        statement = f'''SELECT metadata.xvalue FROM file JOIN metadata
+        ON file.inode = metadata.fk_inode
+        WHERE file.inode = {inode}
+        AND metadata.key = '{attribute}'
+        '''
+
+        try:
+            myresult = mycursor.execute(statement).fetchone()['xvalue']
+        except:
+            myresult = None
+
+        return myresult
+
 #def item_select(sort, direction, searchvalue, artist, tab):
-def item_select(filters): #artist not incorporated yet
+def item_select(filters):
     with get_db() as mycursor:
 
 
@@ -169,8 +184,6 @@ def item_select(filters): #artist not incorporated yet
             sqlsearchvalue = filters['searchvalue']
         else:
             sqlsearchvalue = ''
-
-        pprint(sqlsearchvalue)
 
         if 'id' in filters.keys():
             sqlidmatch = filters['id']
@@ -248,8 +261,6 @@ def item_select(filters): #artist not incorporated yet
             elif filters['tab'] == entity:
                 sqlclauses[entity] = f"AND unicode(namedisplay) LIKE '%{filters[entity]}%'"
         '''
-
-        pprint(filters)
 
         sqlclauses = ''
         for possible_filter in possible_filters:
