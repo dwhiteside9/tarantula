@@ -4,6 +4,13 @@ from string import ascii_uppercase
 
 def returnsubsonic(subsonic_endpoint, filesystem_path):
 
+    def ItemGenre(item):
+        base = {
+            'name': item['namedisplay']
+        }
+
+        return base
+
     def albumList2():
 
         base = {
@@ -44,12 +51,12 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
         return base
 
-    def user():
+    def user(request):
         base = {
             "username": "drew",
             "email": "sindre@activeobjects.no",
             "scrobblingEnabled": "true",
-            "adminRole": "false",
+            "adminRole": "true",
             "settingsRole": "true",
             "downloadRole": "true",
             "uploadRole": "false",
@@ -82,7 +89,11 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
         return base
 
     def searchResult3(request):
-        searchvalue = request.args['query']
+
+        try:
+            searchvalue = request.args['query']
+        except:
+            return 'FAILURE'
 
         base = {
             'artist': [],
@@ -101,8 +112,20 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
         return base
 
+    def song(request):
+        myresult = item_select({'inode': request.args['id'], 'tab': 'track'})
+
+        for item in myresult['namematch']:
+            base = Child(item)
+
+        return base
+
+    def songs():
+        base = {'song': []}
+        return base
+
     def songsByGenre(request):
-        base = {'songsByGenre': song()}
+        base = {'songsByGenre': songs()} #plural songs does not send an argument
 
         for item in item_select({'genre': request.args['genre'], 'tab': 'track'})['namematch']:
             base['songsByGenre']['song'].append(Child(item))
@@ -120,10 +143,6 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
         for item in item_select(myquery_args)['namematch']:
             base['randomSongs']['song'].append(Child(item))
 
-        return base
-
-    def songs():
-        base = {'song': []}
         return base
 
     def topSongs(request):
@@ -149,6 +168,8 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             #only one expected result
             base = AlbumID3(item)
 
+        base['song'] = []
+
         myresult = item_select({'album': albumid.split('---')[0], 'tab': 'track'})
 
         for item in myresult['namematch']:
@@ -156,16 +177,18 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
         return base
 
-    def ArtistWithAlbumsID3(artistid):
+    def ArtistWithAlbumsID3(request):
 
         base = {
-            'artist': {}
+            'artist': {
+                'album': []
+            },
         }
 
-        for item in item_select({'id': artistid, 'tab': 'artist'})['namematch']:
+        for item in item_select({'id': request.args['id'], 'tab': 'artist'})['namematch']:
             base['artist'] = ArtistID3(item)
 
-        for item in item_select({'artist': artistid, 'tab': 'album'})['namematch']:
+        for item in item_select({'artist': request.args['id'], 'tab': 'album'})['namematch']:
             base['artist']['album'].append(AlbumID3(item)) #yeah from what I can see the album is embedded inside the artist
 
         return base
@@ -188,27 +211,14 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
 
     def Child(item):
 
-        artistid3_array = []
-
-        for artist_return in item_select({'inode': item['inode'], 'tab': 'artist'})['namematch']:
-            artistid3_array.append(ArtistID3(artist_return))
-
-        albumname = None
-        albumdate = None
-
-        for albumreturn in item_select({'tab': 'album', 'inode': item['inode']})['namematch']:
-            albumname = albumreturn['namedisplay']
-            albumdate = albumreturn['releasedate']
-
-        return {
+        base = {
             'id': item['inode'],
             'parent': 'parentalbum',
             'isDir': False,
             'title': item['namedisplay'],
-            'album': albumname,
+            'album': None,
             'artist': json.loads(item['artists_json'])[0],
             'track': 1,
-            'genre': 'genreee',
             'coverArt': item['artinode'],
             'size': item['size'],
             'contenttype': 'audio/mpeg',
@@ -228,20 +238,19 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'discNumber': 1,
             'created': '2000-01-01T00:00:00',
             'starred': '2000-01-01T00:00:00',
-            'albumId': f'{albumname}---{albumdate}',
-            'artistId': json.loads(item['artists_json'])[0],
+            'albumId': '---',
             'type': 'music',
             'mediaType': 'song', #song/album/artist??
             'bookmarkPosition': 0,
             'originalwidth': 100,
             'played': '2000-01-01T00:00:00',
             'bpm': 100,
-            'comment': 'testcomment',
+            'comment': 'Comment placeholder',
             'sortName': item['namesort'],
-            'musicBrainzId': item['namedisplay'],
+            'musicBrainzId': None,
             'isrc': '',
             'genres': [],
-            'artists': artistid3_array,
+            'artists': [],
             'displayArtist': 'display artist',
             'albumArtists': [],
             'displayAlbumArtist': 'display album artist',
@@ -249,8 +258,28 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'displayComposer': 'display composer',
             'moods': [],
             'replaygain': {},
-            'explicitStatus':'', #explicit/clean/""
+            'explicitStatus': '', #explicit/clean/""
         }
+
+        #excluding singular noun 'genre' key and artistId
+
+        for album in item_select({'inode': item['inode'], 'tab': 'album'})['namematch']:
+            base['album'] = album['namedisplay']
+
+        for genre in item_select({'inode': item['inode'], 'tab': 'genre'})['namematch']:
+            base['genres'].append(ItemGenre(genre))
+
+        for artist_return in item_select({'inode': item['inode'], 'tab': 'artist'})['namematch']:
+            base['artists'].append(ArtistID3(artist_return))
+
+        if len(base['artists']) < 2:
+            base['artistId'] = base['artists'][0]['name']
+
+        for albumreturn in item_select({'tab': 'album', 'inode': item['inode']})['namematch']:
+            base['album'] = albumreturn['namedisplay']
+            base['albumId'] = f'{albumreturn['namedisplay']}---{albumreturn['releasedate']}'
+
+        return base
 
     def ArtistID3(item):
         base = {
@@ -264,71 +293,49 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             'starred': '2001-01-01T000:00:00',
             'musicBrainzId': item['namedisplay'],
             'sortName': item['namesort'],
-            'roles': [],
-            'album': [] #for use with artistswithalbumsid3
+            'roles': []
         }
 
         return base
 
     def AlbumID3(item):
-        curr_album = {}
+
         albumid = item['namedisplay'] + '---'
 
         if item['releasedate'] is not None:
             albumid += item['releasedate']
 
-        curr_album['id'] = albumid
-
-        curr_album['album'] = item['namedisplay']
-        curr_album['name'] = item['namedisplay']
-        curr_album['title'] = item['namedisplay']
-   
-        curr_album['coverArt'] = item['artinode']
-
-        curr_album['songCount'] = item['filecount']
-        #curr_album['created'] = "2021-07-22T02:09:31+00:00"
-        curr_album['created'] = item['modified']
-        curr_album['duration'] = item['duration']
-        curr_album['playCount'] = 0
-        
-
-
-        #EDIT TO ROUTE TO ARTISTID3
-        '''
-        if item['artists_json'] is not None:
-
-            curr_album['artistId'] = json.loads(item['artists_json'])[0]
-
-            curr_album['artists'] = []
-            for artist in json.loads(item['artists_json']):
-                indiv_artist = {}
-                indiv_artist['id'] = artist
-                indiv_artist['name'] = artist
-                curr_album['artists'].append(indiv_artist)
-            if subsonic_endpoint == 'getAlbumList2':
-                curr_album['artist'] = json.loads(item['artists_json'])[0]
-        else:
-            curr_album['artistId'] = 'idkyet'
-
-            if subsonic_endpoint == 'getAlbumList2':
-                curr_album['artist'] = ''
-            curr_album['artists'] = []
-        '''
-
-        curr_album['artists'] = []
+        base = {
+            'id': albumid,
+            'album': item['namedisplay'],
+            'version': 'Version Placeholder',
+            'name': item['namedisplay'],
+            'title': item['namedisplay'],
+            'coverArt': item['artinode'],
+            'songCount': item['filecount'],
+            'created': item['modified'],
+            'duration': item['duration'],
+            'playCount': 0,
+            'artists': [],
+            'year': item['releasedate'],
+            'genres': []
+        }
 
         if item['artists_json'] is not None:
             for artistid in json.loads(item['artists_json']):
                 myresult = item_select({'id': artistid, 'tab': 'artist'})
                 for item in myresult['namematch']:
-                    curr_album['artists'].append(ArtistID3(item))
+                    base['artists'].append(ArtistID3(item))
 
-        curr_album['year'] = item['releasedate']
-        curr_album['genre'] = 'test genre - albumid3'
+        if item['genres_json'] is not None:
+            for genre in json.loads(item['genres_json']):
+                myresult = item_select({'id': genre, 'tab': 'genre'})
+                for item in myresult['namematch']:
+                    base['genres'].append(ItemGenre(item))
 
-        curr_album['song'] = [] #for use with AlbumID3WithSongs
+        base['genre'] = base['genres'][0]['name'] #Aonsoku only shows it on the album page if this is a key
 
-        return curr_album
+        return base
 
     if subsonic_endpoint not in ['ping.view']:
         subsonic_endpoint = subsonic_endpoint.removesuffix('.view')
@@ -354,7 +361,9 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             }
 
         case 'getUser': #takes "username" argument
-            subobject = user()
+            subobject = {
+                'user': user(request)
+            }
 
         case 'getGenres':
             subobject = {
@@ -385,10 +394,15 @@ def returnsubsonic(subsonic_endpoint, filesystem_path):
             subobject = randomSongs(request)
 
         case 'getArtist':
-            subobject = ArtistWithAlbumsID3(request.args['id'])
+            subobject = ArtistWithAlbumsID3(request) #netlify website does not say this, but it shows it at https://opensubsonic.netlify.app/docs/endpoints/getartist/
 
         case 'getArtistInfo':
             subobject = artistInfo(request.args['id'])
+
+        case 'getSong':
+            subobject = {
+                'song': song(request)
+            }
 
         case 'getAlbum':
             subobject = {

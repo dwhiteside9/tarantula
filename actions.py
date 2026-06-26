@@ -188,7 +188,7 @@ def item_select(filters): #artist not incorporated yet
         commonselection = '''
         file.ogfileinode, 
         file.inode,
-        GROUP_CONCAT(DISTINCT file.artinode) AS artinode,
+        file.artinode,
         LOWER(metadata.xvalue) AS namesort, 
         metadata.xvalue as namedisplay, 
         MAX(file.modtime) AS modified, 
@@ -198,7 +198,8 @@ def item_select(filters): #artist not incorporated yet
         file.streampath,
         COUNT(DISTINCT file.inode) AS filecount,
         COUNT(DISTINCT metadata_album.xvalue) AS albumcount,
-        JSON_GROUP_ARRAY(DISTINCT metadata_artists.xvalue) AS artists_json
+        JSON_GROUP_ARRAY(DISTINCT metadata_artists.xvalue) AS artists_json,
+        JSON_GROUP_ARRAY(DISTINCT metadata_genres.xvalue) AS genres_json
         '''
 
         # the word 'value' is important
@@ -247,12 +248,15 @@ def item_select(filters): #artist not incorporated yet
             elif filters['tab'] == entity:
                 sqlclauses[entity] = f"AND unicode(namedisplay) LIKE '%{filters[entity]}%'"
         '''
+
+        pprint(filters)
+
         sqlclauses = ''
         for possible_filter in possible_filters:
             if possible_filter in filters.keys() and filters[possible_filter] != '': #2nd part is for example when there is an album with no date set and the split with --- returns an empty string
                 match possible_filter:
                     case 'artist':
-                        sqlclauses += f" AND unicode(metadata_artists.xvalue) = '{filters[possible_filter]}'"
+                        sqlclauses += f" AND (unicode(metadata_artists.xvalue) = '{filters[possible_filter]}' OR metadata_artists.xvalue = '{filters[possible_filter]}')" #for when a client is actually using a weird character as a search
                     case 'album':
                         sqlclauses += f" AND unicode(metadata_album.xvalue) = '{filters[possible_filter]}'"
                     case 'genre':
