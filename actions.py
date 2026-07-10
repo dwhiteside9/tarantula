@@ -285,13 +285,20 @@ def item_select(filters):
         if 'inode' in filters.keys():
             statement += f" AND file.inode = '{filters['inode']}'"
 
+        #REMOVED: AND namedisplay IS NOT NULL 
         statement += f'''{sqlclauses}
-        AND namedisplay IS NOT NULL 
+        AND namedisplay IS NOT NULL
         GROUP BY namedisplay 
         ORDER BY {sqlsortby} {sqldirection}{sqlsortby2}'''
 
+        #pprint(statement)
+
         myresult = {}
         myresult['namematch'] = mycursor.execute(statement).fetchall()
+
+        for item in myresult['namematch']:
+            pprint('hello')
+            pprint(item['namedisplay'])
 
         '''
         for file in myresult['namematch']:
